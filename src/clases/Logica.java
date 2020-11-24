@@ -8,30 +8,48 @@ public class Logica {
 	 */
 
 	private int dias_trabajo, dias_descanso, cantidad_puestos;
-	private int lista_horarios[][];
-	boolean bandera_trabajador, bandera_dia;;
-
-	public Logica(int dias_trabajo, int dias_descanso, int cantidad_puestos) {
+	private int[] lista_horarios;
+	private int[][] cromosomas;
+	private int fila_cromosoma;
+	private int descansos_validacion1, descansos_validacion2_trabajadores, trabajos_validacion2_descansero;
+	private int poblacion_inicial;
+	private boolean validacion = true;
+	private int[] posicion_descanso_trabajadores;
+	private int posicion_trabajo_descanseros[];
+	
+	public Logica(int dias_trabajo, int dias_descanso, int cantidad_puestos, int poblacion_inicial) {
 		this.dias_trabajo = dias_trabajo;
 		this.dias_descanso = dias_descanso;
 		this.cantidad_puestos = cantidad_puestos;
-		lista_horarios = new int[cantidad_puestos + 1][dias_trabajo];
+		lista_horarios = new int[dias_trabajo * (cantidad_puestos + 1)];
+		cromosomas = new int[poblacion_inicial][dias_trabajo * (cantidad_puestos + 1)];
+		this.poblacion_inicial = poblacion_inicial;
+		posicion_descanso_trabajadores = new int[cantidad_puestos];
+		posicion_trabajo_descanseros = new int[cantidad_puestos];
 	}
 
-	public int[][] getAleatorios() {
+	public void setFilaCromosoma(int fila_cromosoma) {
+		this.fila_cromosoma = fila_cromosoma;
+	}
+	
+	public void getAleatorios() {
 		// Obtenemos números aleatorios y los redondeamos a 0 o 1
 		int numero_generado = 0;
-		for (int j = 0; j < cantidad_puestos; j += 1) {
-			for (int i = 0; i < dias_trabajo; i += 1) {
-				numero_generado = (int) Math.round(Math.random());
-				lista_horarios[j][i] = numero_generado;
-			}
+		for (int i = 0; i < lista_horarios.length; i += 1) {
+			numero_generado = (int) Math.round(Math.random());
+			lista_horarios[i] = numero_generado;
 		}
-		return lista_horarios;
 	}
 
-	public void setSolucion() {
-		for (int[] j : lista_horarios) {
+	public void setCromosomas() {
+		for (int i = 0; i < lista_horarios.length; i += 1) {
+			cromosomas[fila_cromosoma][i] = lista_horarios[i];
+		}
+		fila_cromosoma += 1;
+	}
+
+	public void ImprimirCromosomas() {
+		for (int[] j : cromosomas) {
 			for (int i : j) {
 				System.out.print("[" + i + "]");
 			}
@@ -39,53 +57,62 @@ public class Logica {
 		}
 	}
 
-	public boolean getValidarHorarioxTrabajador() {
-		/*
-		 * Validamos que c/t tenga sus días de trabajo y descanso correctos Validación
-		 * fila por fila
-		 */
-		int suma_dias_trabajo = 0;
-		for (int j = 0; j < cantidad_puestos && !bandera_trabajador; j += 1) {
-			for (int i = 0; i < dias_trabajo; i += 1) {
-				suma_dias_trabajo += lista_horarios[j][i];
+	public boolean validacion1() {
+		// Validamos que en cada cromosoma haya 7 descansos.
+		fila_cromosoma += 1;
+		for (int i : cromosomas[fila_cromosoma]) {
+			if (i == 0) {
+				descansos_validacion1 += 1;
 			}
-			if (suma_dias_trabajo != dias_trabajo - dias_descanso) {
-				bandera_trabajador = true;
-			}
-			suma_dias_trabajo = 0;
 		}
-		return bandera_trabajador;
+		if (descansos_validacion1 != dias_trabajo) {
+			validacion = false;
+		}
+		// fila_cromosoma += 1;
+		return validacion;
 	}
 
-	public boolean getDescansosxDia() {
-		// Validamos que por cada día haya sólo un trabajador en descanso
-		int descansos_dia = 0, descansos_total = 0;
-		for (int i = 0; i < dias_trabajo && !bandera_dia; i += 1) {
-			for (int j = 0; j < cantidad_puestos; j += 1) {
-				if (lista_horarios[j][i] == 0) {
-					descansos_dia += 1;
+	public boolean validacion2() {
+		// Validamos que en cada parte del cromosoma haya 0 o 1 descanso.
+		// Validamos que el descansero trabaje la cantidad de días descansados por los trabajadores.
+		// Guardamos el index de cada descanso en un array.
+		// i index the cromosoma
+		// ii index the cada parte del cromosoma
+		// iii index the posicion_descanso_trabajadores
+		// iiii index the posicion_trabajo_descanseros
+		int iii = 0, iiii = 0;
+		for (int i = 0; i < cromosomas.length && iii < cantidad_puestos && iiii < cantidad_puestos;) {
+			for (int ii = 0; ii < dias_trabajo; ii += 1) {
+				if (i < cantidad_puestos * dias_trabajo) {
+					if (cromosomas[fila_cromosoma][i] == 0) {
+						posicion_descanso_trabajadores[iii] = ii;
+						descansos_validacion2_trabajadores += 1;
+						iii += 1;
+					}
+				} else {
+					if (cromosomas[fila_cromosoma][i] == 1) {
+						posicion_trabajo_descanseros[iiii] = ii;
+						trabajos_validacion2_descansero += 1;
+						iiii += 1;
+					}
 				}
-			}
-			if (descansos_dia == 0 || descansos_dia == 1) {
-				descansos_total += descansos_dia;
-				descansos_dia = 0;
-			} else {
-				bandera_dia = true;
-			}
+				i += 1;
+			}			
 		}
-		if (descansos_total != cantidad_puestos) {
-			bandera_dia = true;
+		
+		if (descansos_validacion2_trabajadores != trabajos_validacion2_descansero) {
+			validacion = false;
 		}
-		return bandera_dia;
+		
+		//fila_cromosoma += 1;
+		return validacion;
+	}
+	
+	
+	public boolean validacion3() {
+		// Validamos que por dia de trabajo haya 0 o 1 descanso.
+		
+		return validacion;
 	}
 
-	public void setDescansero() {
-		for (int j = 0; j < cantidad_puestos; j += 1) {
-			for (int i = 0; i < dias_trabajo; i += 1) {
-				if (lista_horarios[j][i] == 0) {
-					lista_horarios[cantidad_puestos][i] = 1;
-				}
-			}
-		}
-	}
 }

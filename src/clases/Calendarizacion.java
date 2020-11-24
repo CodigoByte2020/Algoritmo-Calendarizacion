@@ -2,8 +2,6 @@ package clases;
 
 import java.util.Scanner;
 
-import javax.swing.JOptionPane;
-
 public class Calendarizacion {
 
 	public static void main(String[] args) {
@@ -20,23 +18,25 @@ public class Calendarizacion {
 		int dias_descanso = entrada.nextInt();
 		System.out.println("¿Cuántos puestos desea cubrir?");
 		int cantidad_puestos = entrada.nextInt();
-
-		Logica mensajero = new Logica(dias_trabajo, dias_descanso, cantidad_puestos);
-
+		System.out.println("¿Cuanta será la población inicial?");
+		int poblacion_inicial = entrada.nextInt();		
 		
-		do {
-			mensajero.bandera_trabajador = false;
-			mensajero.bandera_dia = false;
-			mensajero.getAleatorios();
-			mensajero.getValidarHorarioxTrabajador(); //Validación fila por fila
-			if (mensajero.bandera_trabajador == false) {
-				mensajero.getDescansosxDia(); //Validación columna por columna
-			}
-		} while (mensajero.bandera_trabajador == true || mensajero.bandera_dia == true);
+		Logica objeto = new Logica(dias_trabajo, dias_descanso, cantidad_puestos, poblacion_inicial);
 
-		if(mensajero.bandera_trabajador == false && mensajero.bandera_dia == false) {
-			mensajero.setDescansero();
-			mensajero.setSolucion();
-		}	
+		for (int i = 0; i < poblacion_inicial; i += 1) {
+			objeto.getAleatorios();
+			objeto.setCromosomas();
+		}
+		
+		objeto.ImprimirCromosomas();
+		objeto.setFilaCromosoma(-1);		
+		
+		for (int i = 0; i < poblacion_inicial; i += 1) {
+			if (objeto.validacion1()) {
+				if (objeto.validacion2()) {
+					objeto.validacion3();
+				}
+			}
+		}				
 	}
 }
